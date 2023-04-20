@@ -15,12 +15,14 @@ SENDER_EMAIL = config['email']['sender_email']
 SENDER_PASSWORD = config['email']['sender_password']
 RECIPIENT_EMAIL = config['email']['recipient_email']
 SMTP_SERVER = config['email']['smtp_server']
+SCRAPE_FREQUENCY = config['scrape']['frequency']
+FILE_TYPE = config['scrape']['file_type']
 
 def on_start():
-    print("\n\nScraper running!\nEverything is functioning properly.\n\n")
-    print(f"Sender email: {SENDER_EMAIL}")
-    print(f"Recipient email: {RECIPIENT_EMAIL}")
-    print(f"SMTP server: {SMTP_SERVER}\n")
+    logging.info("Scraper running!")
+    logging.info(f"Sender email: {SENDER_EMAIL}")
+    logging.info(f"Recipient email: {RECIPIENT_EMAIL}")
+    logging.info(f"SMTP server: {SMTP_SERVER}")
 
 def get_website_files(url, path=''):
     response = requests.get(url + path)
@@ -40,10 +42,12 @@ WEBSITE_CONTENTS = {}
 
 def get_website_contents(url):
     response = requests.get(url)
+    response.raise_for_status()
     return response.text
 
 def get_file_contents(url, file_path):
     response = requests.get(url + file_path)
+    response.raise_for_status()
     return response.text
 
 def send_notification(subject, body):
@@ -62,19 +66,25 @@ while True:
             WEBSITE_CONTENTS[url] = {}
         for file_path in get_website_files(url):
             if file_path not in WEBSITE_CONTENTS[url]:
-                contents = get_file_contents(url, file_path)
-                WEBSITE_CONTENTS[url][file_path] = contents
+                try:
+                    contents = get_file_contents(url, file_path)
+                    WEBSITE_CONTENTS[url][file_path] = contents
+                except Exception as e:
+                    logging.error(f'Error getting file contents: {e}')
             else:
-                current_contents = get_file_contents(url, file_path)
-                if WEBSITE_CONTENTS[url][file_path] != current_contents:
-                    changes = list(ndiff(WEBSITE_CONTENTS[url][file_path], current_contents))
-                    changes_str = '\n'.join(changes)
-                    subject = f'Update on {url}/{file_path}'
-                    body = f'The contents of {url}/{file_path} have changed.\n\nChanges:\n\n{changes_str}'
-                    try:
-                        send_notification(subject, body)
-                        logging.info('Email notification sent successfully.')
-                    except Exception as e:
-                        logging.error(f'Error sending email notification: {e}')
-                    WEBSITE_CONTENTS[url][file_path] = current_contents
-    time.sleep(15)
+                try:
+                    current_contents = get_file_contents(url, file_path)
+                    if WEBSITE_CONTENTS[url][file_path] != current_contents:
+                        changes = list(ndiff(WEBSITE_CONTENTS[url][file_path], current_contents))
+                        changes_str = '\n'.join(changes)
+                        subject = f'Update on {url}/{file_path}'
+                        body = f'The contents of {url}/{file_path} have changed.\n\nChanges:\n\n{changes_str}'
+                        try:
+                            send_notification(subject, body)
+                            logging.info('Email notification sent successfully.')
+                        except Exception as e:
+                            logging.error(f'Error sending email notification: {e}')
+                        WEBSITE_CONTENTS[url][file_path] = current_contents
+                except Exception as e:
+                    logging.error(f'Error getting file contents: {e}')
+        time.sleep(int(SCRAPE_FREQUENCY))
