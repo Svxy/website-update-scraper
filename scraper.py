@@ -16,7 +16,6 @@ SENDER_PASSWORD = config['email']['sender_password']
 RECIPIENT_EMAIL = config['email']['recipient_email']
 SMTP_SERVER = config['email']['smtp_server']
 SCRAPE_FREQUENCY = config['scrape']['frequency']
-FILE_TYPE = config['scrape']['file_type']
 
 def on_start():
     logging.info("Scraper running!")
