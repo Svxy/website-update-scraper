@@ -1,0 +1,26 @@
+# This file can be edited and saved in '/etc/systemd/system/update_scraper.service', for those of you who want this app running on system startup.
+
+
+# Startup commands:
+
+
+# sudo systemctl start update_scraper
+
+# sudo systemctl enable update_scraper
+
+# sudo systemctl status update_scraper
+
+
+[Unit]
+Description=Update Scraper
+After=network.target
+
+[Service]
+User=os_username
+WorkingDirectory=/path/to/script
+ExecStart=/usr/bin/python3 scraper.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
