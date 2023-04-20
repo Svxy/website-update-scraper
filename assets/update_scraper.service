@@ -17,7 +17,7 @@ After=network.target
 
 [Service]
 User=os_username
-WorkingDirectory=/path/to/script
+WorkingDirectory=/path/to/scraper.py
 ExecStart=/usr/bin/python3 scraper.py
 Restart=always
 RestartSec=10
